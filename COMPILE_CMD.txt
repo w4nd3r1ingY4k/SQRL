@@ -1,0 +1,3 @@
+g++ $(wx-config --cxxflags) App.cpp MainFrame.cpp $(wx-config --libs) -o MyApp
+
+g++ $(wx-config --cxxflags) -I/opt/homebrew/Cellar/cryptopp/8.9.0/include App.cpp MainFrame.cpp crypto_driver.cpp LoginFrame.cpp $(wx-config --libs) -L/opt/homebrew/Cellar/cryptopp/8.9.0/lib -lcryptopp -o MyApp

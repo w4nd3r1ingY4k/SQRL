@@ -1,0 +1,34 @@
+{
+    "configurations": [
+        {
+            "name": "wxWidgets and Boost",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/opt/homebrew/Cellar/wxwidgets/3.2.4/include/wx-3.2",
+                "/opt/homebrew/Cellar/wxwidgets/3.2.4/lib/wx/include/osx_cocoa-unicode-3.2",
+                "/opt/homebrew/Cellar/cryptopp/8.9.0/include",
+                "/Users/akbarshamji/desktop/boost_asio_1_30_2",
+                "/opt/homebrew/Cellar/mysql-connector-c++/8.3.0/include"
+            ],
+            "defines": [
+                "__WXMAC__",
+                "WXUSINGDLL",
+                "wxUSE_GUI=1"
+            ],
+            "macFrameworkPath": [
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang++",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "macos-clang-arm64",
+            "compilerArgs": [
+                "-I/opt/homebrew/opt/wxwidgets/lib/wx/include/osx_cocoa-unicode-3.2.4",
+                "-I/Users/akbarshamji/desktop/boost_asio_1_30_2",
+                "-L/opt/homebrew/Cellar/mysql-connector-c++/8.0.30/lib",
+                "-lmysqlcppconn"
+            ]
+        }
+    ],
+    "version": 4
+}
