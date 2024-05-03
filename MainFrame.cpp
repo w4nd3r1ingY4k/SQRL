@@ -2,7 +2,7 @@
 #include "MainFrame.h"
 #include <fstream>
 #include <iostream>
-#include "crypto_driver.cpp"
+#include "CryptoDriver.h"
 
 MainFrame::MainFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title)
 {

@@ -8,6 +8,8 @@ wxIMPLEMENT_APP(App);
 
 bool App::OnInit()
 {
+	wxLog::SetActiveTarget(new wxLogStderr());
+
 	server = new Server();
 	if (!server->Start(3000))
 	{ // Assuming Start returns bool indicating success/failure
