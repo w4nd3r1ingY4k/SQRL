@@ -45,9 +45,10 @@ void Server::OnSocketEvent(wxSocketEvent &event)
     {
 
         char buffer[1024] = {0};                  // Ensuring the buffer is initialized
-        socket->Read(buffer, sizeof(buffer) - 1); // Leave room for null terminator
+        socket->Read(buffer, sizeof(buffer) - 1); // the first read
         wxString msg(buffer, wxConvUTF8);
         wxLogMessage(msg + " Was sent to the server\n\n");
+
         std::pair<CryptoPP::RSA::PrivateKey, CryptoPP::RSA::PublicKey> ParamsRSA = RSA_generate_keys();
         CryptoPP::RSA::PrivateKey sk = ParamsRSA.first;
         CryptoPP::RSA::PublicKey pk = ParamsRSA.second;
@@ -55,8 +56,9 @@ void Server::OnSocketEvent(wxSocketEvent &event)
         std::string string_pk = SerializePublicKey(pk);
         if (msg.StartsWith("LOGIN"))
         {
+            socket->Write("OK", 2); // the second write
+            wxLogMessage("OK");
             socket->Write(string_pk.c_str(), string_pk.length());
-            socket->Write("OK", 2);
         }
         else
         {

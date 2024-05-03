@@ -98,6 +98,7 @@ void LoginFrame::OnButtonPress(wxCommandEvent &event)
 
     // Create a socket client
     wxSocketClient socket;
+    // socket.SetFlags(wxSOCKET_WAITALL | wxSOCKET_BLOCK);
     wxIPV4address addr;
     addr.Hostname("localhost"); // Server address
     addr.Service(3000);         // Server port
@@ -108,67 +109,66 @@ void LoginFrame::OnButtonPress(wxCommandEvent &event)
 
     if (socket.IsConnected())
     {
-
         status_text->SetForegroundColour(*wxGREEN);
         status_text->SetLabel("Connected To Server");
         wxLogMessage("Client: Connected to server");
-
-        // initialize params to get public key
-        std::tuple<CryptoPP::DH,
-                   CryptoPP::SecByteBlock,
-                   CryptoPP::SecByteBlock>
-            InitializedParams = Client_DH_initialize();
-
-        CryptoPP::SecByteBlock PublicKey = std::get<2>(InitializedParams);
-        CryptoPP::SecByteBlock PrivateKey = std::get<1>(InitializedParams);
-
-        // PK LOG START
-        std::string PublicKey_hex;
-        CryptoPP::HexEncoder encoder;
-        encoder.Attach(new CryptoPP::StringSink(PublicKey_hex));
-        encoder.Put(PublicKey.BytePtr(), PublicKey.size());
-        encoder.MessageEnd();
-
-        // Log the public key
-        wxString logMessage = wxString::Format("Client: Public value -> %s", PublicKey_hex);
-        wxLogMessage(logMessage);
-
-        //-------------
-
-        wxString ID = ID_text->GetValue();
-        wxString message = "LOGIN " + ID; // Include newline if server expects lines
-
-        // Send the message
-        socket.Write(message, message.length());
-        socket.Write(PublicKey_hex.c_str(), PublicKey_hex.length());
-
-        // Wait for response
-        char response[10];
-        socket.Read(response, sizeof(response) - 1); // Leave space for null terminator
-        response[socket.LastCount()] = '\0';         // Null-terminate the string
-
-        wxString serverResponse(response);
-
-        // Handle the server's response
-        if (serverResponse.StartsWith("OK"))
-        {
-            this->Hide();
-            MainFrame *mainFrame = new MainFrame("Main Application");
-            mainFrame->SetClientSize(675, 350);
-            mainFrame->Center();
-            mainFrame->Show(true);
-        }
-        else if (serverResponse.StartsWith("INVALID"))
-        {
-            status_text->SetForegroundColour(*wxRED);
-            status_text->SetLabel("Login failed, Server response: INVALID");
-        }
     }
     else
     {
         status_text->SetForegroundColour(*wxRED);
         status_text->SetLabel("Failed to connect to server!");
+        wxLogMessage("Client: Failed to connect to server");
         socket.Close();
+        return;
+    }
+
+    // initialize params to get public key
+    std::tuple<CryptoPP::DH,
+               CryptoPP::SecByteBlock,
+               CryptoPP::SecByteBlock>
+        InitializedParams = Client_DH_initialize();
+
+    CryptoPP::SecByteBlock PublicKey = std::get<2>(InitializedParams);
+    CryptoPP::SecByteBlock PrivateKey = std::get<1>(InitializedParams);
+
+    // PK LOG START
+    std::string PublicKey_hex;
+    CryptoPP::HexEncoder encoder;
+    encoder.Attach(new CryptoPP::StringSink(PublicKey_hex));
+    encoder.Put(PublicKey.BytePtr(), PublicKey.size());
+    encoder.MessageEnd();
+
+    // Log the public key
+    wxString logMessage = wxString::Format("Client: Public value -> %s \n\n", PublicKey_hex);
+    wxLogMessage(logMessage);
+
+    //-------------
+
+    wxString ID = ID_text->GetValue();
+    wxString message = "LOGIN " + ID; // Include newline if server expects lines
+
+    // Send the message
+
+    socket.Write(message, message.length()); // the first write
+    char response[1024];
+    socket.Read(response, sizeof(response) - 1); // The second read
+    response[socket.LastCount()] = '\0';         // Null-terminate the string
+    wxString serverResponse(response);
+    wxLogMessage(response);
+
+    socket.Write(PublicKey_hex.c_str(), PublicKey_hex.length()); // the third write
+    if (serverResponse.StartsWith("OK"))
+    {
+        this->Hide();
+        MainFrame *mainFrame = new MainFrame("Main Application");
+        mainFrame->SetClientSize(675, 350);
+        mainFrame->Center();
+        mainFrame->Show(true);
+    }
+    else if (serverResponse.StartsWith("INVALID"))
+    {
+        status_text->SetForegroundColour(*wxRED);
+        status_text->SetLabel("Login failed, Server response: INVALID");
     }
 }
 // Initialize parameters
