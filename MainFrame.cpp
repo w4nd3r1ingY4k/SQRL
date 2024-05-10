@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include "CryptoDriver.h"
+#include <wx/socket.h>
 
 MainFrame::MainFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title)
 {
@@ -25,7 +26,7 @@ MainFrame::MainFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title)
 	text_box = new wxTextCtrl(panel_bottom_left, wxID_ANY, wxT("Enter ID here!"), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
 	text_box_pw = new wxTextCtrl(panel_bottom_left, wxID_ANY, wxT("Enter Data here!"), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
 	wxButton *submit_button = new wxButton(panel_bottom_left, wxID_ANY, ("Encrypt!"), wxDefaultPosition, wxDefaultSize);
-	wxButton *allkeys_button = new wxButton(panel_bottom_left, wxID_ANY, ("All Keys!"), wxDefaultPosition, wxDefaultSize);
+	wxButton *allkeys_button = new wxButton(panel_bottom_left, wxID_ANY, ("Key Search!"), wxDefaultPosition, wxDefaultSize);
 	wxButton *clear_button = new wxButton(panel_bottom_left, wxID_ANY, ("Clear!"), wxDefaultPosition, wxDefaultSize);
 	wxButton *decrypt_button = new wxButton(panel_bottom_left, wxID_ANY, "Decrypt!", wxDefaultPosition, wxDefaultSize);
 
@@ -91,19 +92,17 @@ void MainFrame::OnKeyEvent(wxKeyEvent &event)
 	wxChar keyChar = event.GetUnicodeKey();
 	wxLogStatus("key event: %c", keyChar);
 }
-// void MainFrame::OnButtonDecrypt(wxCommandEvent &event)
-// {
-
-// }
+void MainFrame::OnButtonDecrypt(wxCommandEvent &event)
+{
+}
 
 // /*
 // 	On button press, the encrypted text file is iterated through and every key is returned for ease of decryption
 // */
 
-// void MainFrame::OnButtonAllKeys(wxCommandEvent &event)
-// {
-
-// }
+void MainFrame::OnButtonAllKeys(wxCommandEvent &event)
+{
+}
 /*
 	on button clear clears every element from the main text box.
 */
@@ -122,7 +121,12 @@ void MainFrame::OnButtonClear(wxCommandEvent &event)
 		repl_panel_top_left->Layout();
 	}
 }
-
+/**
+ * encryption scheme
+ */
+wxString MainFrame::encrypt(wxString id)
+{
+}
 void MainFrame::OnButtonEncrypt(wxCommandEvent &event)
 {
 	wxString idText = text_box->GetValue();

@@ -1,4 +1,4 @@
-#include "util.hpp"
+#include "Util.hpp"
 
 /**
  * Convert char vec to string.
@@ -104,4 +104,102 @@ std::vector<std::string> string_split(std::string str, char delimiter)
         result.push_back(s);
     }
     return result;
+}
+
+/**
+ * Convert an rsa public key into a sec byte block
+ */
+CryptoPP::SecByteBlock RSA_PublicKey_To_SecByteBlock(const CryptoPP::RSA::PublicKey &pk)
+{
+    CryptoPP::ByteQueue queue;
+    pk.Save(queue);
+
+    CryptoPP::SecByteBlock byteBlock(queue.CurrentSize());
+    queue.Get(byteBlock, byteBlock.size());
+
+    return byteBlock;
+}
+
+/**
+ * converts a sec byte block back into an rsa public key
+ */
+CryptoPP::RSA::PublicKey SecByteBlock_To_RSA_Public_Key(const CryptoPP::SecByteBlock &rsa_pk)
+{
+    CryptoPP::ByteQueue queue;
+    queue.Put(rsa_pk, rsa_pk.size());
+    queue.MessageEnd();
+
+    CryptoPP::RSA::PublicKey publicKey;
+
+    publicKey.Load(queue);
+
+    // error check?
+
+    return publicKey;
+}
+
+/**
+ * converts an RSA private key to a sec byte block
+ */
+CryptoPP::SecByteBlock RSA_SecretKey_To_SecByteBlock(const CryptoPP::RSA::PrivateKey &sk)
+{
+    CryptoPP::ByteQueue queue;
+    sk.Save(queue);
+
+    CryptoPP::SecByteBlock byteBlock(queue.CurrentSize());
+    queue.Get(byteBlock, byteBlock.size());
+
+    return byteBlock;
+}
+
+/**
+ * converts a secbyte block back into an rsa secret key
+ */
+CryptoPP::RSA::PrivateKey SecByteBlock_To_RSA_Secret_Key(const CryptoPP::SecByteBlock &rsa_sk)
+{
+    CryptoPP::ByteQueue queue;
+    queue.Put(rsa_sk, rsa_sk.size());
+    queue.MessageEnd();
+
+    CryptoPP::RSA::PrivateKey privateKey;
+
+    privateKey.Load(queue);
+
+    return privateKey;
+}
+
+/**
+ * converts a sec byte block into a base 64 encoded std string
+ */
+std::string Base64Encode(const CryptoPP::SecByteBlock &bloq)
+{
+    std::string base64;
+    CryptoPP::Base64Encoder encoder;
+
+    encoder.Attach(new CryptoPP::StringSink(base64));
+    encoder.Put(bloq, bloq.size());
+    encoder.MessageEnd();
+
+    return base64;
+}
+
+/**
+ * converts a base 64 encoded std string back into a sec byte block
+ */
+CryptoPP::SecByteBlock Base64Decode(const std::string &encodedString)
+{
+    CryptoPP::Base64Decoder decoder;
+    CryptoPP::SecByteBlock decodedBytes;
+
+    decoder.Put((const CryptoPP::byte *)encodedString.data(), encodedString.size());
+    decoder.MessageEnd();
+
+    size_t decodedSize = decoder.MaxRetrievable();
+    decodedBytes.resize(decodedSize);
+    if (decodedSize)
+    {
+        decoder.Get(decodedBytes.BytePtr(), decodedSize);
+    }
+
+    return decodedBytes;
 }

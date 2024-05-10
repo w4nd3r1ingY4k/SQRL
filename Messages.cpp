@@ -1,5 +1,5 @@
-#include "messages.hpp"
-#include "util.hpp"
+#include "Messages.hpp"
+#include "Util.hpp"
 
 // ================================================
 // MESSAGE TYPES
