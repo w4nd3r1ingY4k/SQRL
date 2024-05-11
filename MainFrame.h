@@ -1,3 +1,6 @@
+#ifndef MAINFRAME_H // Check if MAINFRAME_H is not defined
+#define MAINFRAME_H // Define MAINFRAME_H
+
 #include <wx/socket.h>
 #include <wx/wx.h>
 #include <cryptopp/sha.h>
@@ -17,17 +20,20 @@
 #include "cryptopp/modes.h"
 #include <cryptopp/filters.h>
 #include <cryptopp/base64.h>
+#include <cryptopp/hex.h>
 #include <cstdint>
+class LoginFrame;
 
 class MainFrame : public wxFrame
 {
 public:
-	MainFrame(const wxString &title);
+	MainFrame(std::string ID, const wxString &title);
+	void AccessLoginFrameData();
 
 private:
+	std::string ID_text;
 	void OnKeyEvent(wxKeyEvent &event);
 	void OnButtonEncrypt(wxCommandEvent &event);
-	wxString encrypt(wxString id);
 	void OnButtonDecrypt(wxCommandEvent &event);
 	void OnButtonAllKeys(wxCommandEvent &event);
 	void OnButtonClear(wxCommandEvent &event);
@@ -40,4 +46,11 @@ private: // HANDLERS
 	void ConnectToServer();
 	void OnSocketEvent(wxSocketEvent &event);
 	void SendDataToServer(std::string data);
+
+private: // cryptographic functions
+	std::string encrypt(const std::string &plaintext);
+	std::string decrypt(const std::string &encrypted_data);
+	std::string HashIDTwice(const std::string &id);
 };
+
+#endif // MAINFRAME_H

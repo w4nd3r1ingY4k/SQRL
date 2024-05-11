@@ -2,15 +2,17 @@ import smtplib
 import argparse
 from email.mime.text import MIMEText
 
+
 def send_email(subject, body, to_email):
+    
     gmail_user = "authenticatorsqrl@gmail.com"
     gmail_pw = "nzwh cutl jnvb acqi"
+    
 
     msg = MIMEText(body)
     msg['Subject'] = subject
     msg['From'] = gmail_user
     msg['To'] = to_email
-
     try:
         server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
         server.ehlo()
@@ -21,6 +23,7 @@ def send_email(subject, body, to_email):
         print('Email Sent!')
     except Exception as e:
         print('Failed to send email: ', e)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'send eail via gmail')

@@ -19,11 +19,11 @@ bool App::OnInit()
 
 	wxLogMessage("Server started successfully on port 3000.");
 
-	LoginFrame *lf = new LoginFrame("Log In");
-	lf->SetClientSize(700, 400);
-	lf->Center();
-	lf->Show(true);
-	SetTopWindow(lf); // Set the login frame as the top window
+	loginFrame = new LoginFrame("Log In");
+	loginFrame->SetClientSize(750, 500);
+	loginFrame->Center();
+	loginFrame->Show(true);
+	SetTopWindow(loginFrame); // Set the login frame as the top window
 
 	return true;
 }

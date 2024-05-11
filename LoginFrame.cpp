@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iomanip>
 #include <cstdlib>
+#include <fstream>
 
 CryptoPP::SecByteBlock PublicKey;
 
@@ -13,21 +14,33 @@ LoginFrame::LoginFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title
 {
     this->SetBackgroundColour(wxColour(47, 79, 79));
     updateChallengeString();
+    mail_sent = false;
 
     // This is exclusively for the 5 digit verification code
     check_button = new wxButton(this, wxID_ANY, "Check", wxPoint(250, 170), wxDefaultSize);
     check_button->Hide();
     five_digit_code = new wxTextCtrl(this, wxID_ANY, "ENTER HERE", wxPoint(250, 120), wxDefaultSize);
     five_digit_code->Hide();
-    instructions = new wxStaticText(this, wxID_ANY, "XXX", wxPoint(250, 70), wxDefaultSize);
+    instructions = new wxStaticText(this, wxID_ANY,
+                                    "Click the [Check] button once first to send the code to your email. \n"
+                                    "Then, check your email for an authentication code!\n"
+                                    "NOTE: After 3 attempts, the session will terminate.",
+                                    wxPoint(250, 70), wxDefaultSize);
+    instructions->SetForegroundColour(*wxWHITE);
     instructions->Hide();
 
     check_button->Bind(wxEVT_BUTTON, &LoginFrame::OnButtonDecrement, this);
     // end of verification code frame elements.
 
     // this is for the normal login frame
-    ID_text = new wxTextCtrl(this, wxID_ANY, "9 DIGIT ID", wxPoint(200, 200), wxSize(80, 20));
+    ID_text = new wxTextCtrl(this, wxID_ANY, "ID", wxPoint(200, 200), wxSize(80, 20));
     submit_button = new wxButton(this, wxID_ANY, "Submit", wxDefaultPosition, wxDefaultSize);
+    first_instructions = new wxStaticText(this, wxID_ANY,
+                                          "What's new in v0.0.1:\n"
+                                          "This is the first version of SQRL, everything is new!\n"
+                                          "NOTE: to enter text into a box, remove the existing text in the box first.",
+                                          wxDefaultPosition, wxDefaultSize);
+    first_instructions->SetForegroundColour(*wxWHITE);
 
     EMAIL_text = new wxTextCtrl(this, wxID_ANY, "EMAIL", wxPoint(200, 200), wxSize(80, 20));
 
@@ -100,6 +113,7 @@ LoginFrame::LoginFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title
     checkbox_sizer->Add(existing_box, 0, 5);
 
     wxBoxSizer *hbox = new wxBoxSizer(wxHORIZONTAL);
+    hbox->Add(first_instructions, 0, wxALL, 10);
     hbox->AddStretchSpacer(2);
     hbox->Add(artDisplay, 0, wxALL, 10);
 
@@ -120,22 +134,55 @@ LoginFrame::LoginFrame(const wxString &title) : wxFrame(nullptr, wxID_ANY, title
     this->CreateStatusBar();
     this->Layout();
 }
+void LoginFrame::sendEmail()
+{
+    if (existing_user_checkbox->IsChecked())
+    {
+        if (mail_sent == false)
+        {
+            std::string id(ID_text->GetValue());
+            std::string to_email = retrieve_email(id);
+            std::string subject = "SQRL Verification Code";
+            std::string body = "Here is your SQRL verification code: \n" + challenge_string;
+
+            std::stringstream ss;
+            ss << "python python_mail_script.py \"" << subject << "\" \"" << body << "\" \"" << to_email << "\"";
+            system(ss.str().c_str());
+            mail_sent = true;
+        }
+        else if (mail_sent == true)
+        {
+            std::cout << "check your email for auth key" << std::endl;
+        }
+    }
+    else if (new_user_checkbox->IsChecked())
+    {
+        if (mail_sent == false)
+        {
+            std::string subject = "SQRL Verification Code";
+            std::string body = challenge_string;
+            wxString to_email_wx = EMAIL_text->GetValue();
+            std::string to_email(to_email_wx);
+
+            std::stringstream ss;
+            ss << "python python_mail_script.py \"" << subject << "\" \"" << body << "\" \"" << to_email << "\"";
+            system(ss.str().c_str());
+            mail_sent = true;
+        }
+        else if (mail_sent == true)
+        {
+            std::cout << "Check email for auth key" << std::endl;
+        }
+    }
+}
 /**
  *
  */
 void LoginFrame::OnButtonDecrement(wxCommandEvent &event)
 {
-    std::string subject = "SQRL Verification Code";
-    std::string body = challenge_string;
-    wxString to_email_wx = EMAIL_text->GetValue();
-    std::string to_email(to_email_wx);
-
-    std::stringstream ss;
-    ss << "python python_mail_script.py \"" << subject << "\" \"" << body << "\" \"" << to_email << "\"";
-    system(ss.str().c_str());
-
-    std::cout
-        << this->challenge_string << std::endl;
+    sendEmail();
+    // std::cout
+    //     << this->challenge_string << std::endl;
     wxString attempt = five_digit_code->GetValue();
     std::string attempt_str(attempt);
 
@@ -146,6 +193,7 @@ void LoginFrame::OnButtonDecrement(wxCommandEvent &event)
         if (counter <= 0)
         {
             std::cout << "XXX" << std::endl;
+            this->Close();
         }
         else
         {
@@ -155,9 +203,10 @@ void LoginFrame::OnButtonDecrement(wxCommandEvent &event)
     else
     {
         std::cout << "Logging in..." << std::endl;
-        this->Destroy();
+        this->Hide();
         // Create and show the MainFrame
-        MainFrame *mainFrame = new MainFrame("Main Frame");
+        std::string id_text_str(ID_text->GetValue());
+        MainFrame *mainFrame = new MainFrame(id_text_str, "Main Frame");
         // Set the size of the frame
         mainFrame->SetSize(800, 600); // Width = 800, Height = 600
         mainFrame->Show();
@@ -303,7 +352,7 @@ void LoginFrame::HandleSocketConnection()
         // send success message to user
         this->Layout();
         status_text->SetForegroundColour(*wxGREEN);
-        status_text->SetLabel("Connected To Server");
+        status_text->SetLabel("Server connection established, Loading...");
         this->Layout();
 
         // send success message to terminal
@@ -422,6 +471,7 @@ void LoginFrame::HandleSocketInput()
                 status_text->Hide();
                 // header_text->Hide();
                 existing_user_text->Hide();
+                first_instructions->Hide();
                 new_user_text->Hide();
                 submit_button->Hide();
                 new_user_checkbox->Hide();
@@ -429,14 +479,13 @@ void LoginFrame::HandleSocketInput()
                 five_digit_code->Show();
                 instructions->Show();
                 check_button->Show();
-                std::cout << "Attempts remaining: 3" << std::endl;
                 // load verification elements.
                 wxString id = ID_text->GetValue();
                 std::string id_str(id);
                 wxString email = EMAIL_text->GetValue();
                 std::string email_str(email);
                 user_email = email_str;
-                wxString id_and_mail = 'x' + id + "|" + email;
+                sendEmail();
 
                 // wxCharBuffer buffer = id_and_mail.mb_str(wxConvUTF8);
                 // size_t length = strlen(buffer.data());
@@ -461,6 +510,33 @@ void LoginFrame::HandleSocketInput()
             }
             else if (existing_user_checkbox->IsChecked())
             {
+
+                // load verification elements.
+                wxString id = ID_text->GetValue();
+                std::string id_str(id);
+                if (checkForID(id_str) == true)
+                {
+                    std::cout << "Found the key" << std::endl;
+                    ID_text->Hide();
+                    EMAIL_text->Hide();
+                    status_text->Hide();
+                    first_instructions->Hide();
+                    // header_text->Hide();
+                    existing_user_text->Hide();
+                    new_user_text->Hide();
+                    submit_button->Hide();
+                    new_user_checkbox->Hide();
+                    existing_user_checkbox->Hide();
+                    five_digit_code->Show();
+                    instructions->Show();
+                    check_button->Show();
+                }
+                else
+                {
+                    status_text->SetForegroundColour(*wxRED);
+                    status_text->SetLabel("Could not find login, please restart!");
+                    std::cout << "Key not found." << std::endl;
+                }
             }
 
             // this->Destroy();
@@ -474,6 +550,122 @@ void LoginFrame::HandleSocketInput()
             // mainFrame->Show();
         }
     }
+}
+/**
+ *
+ */
+wxString LoginFrame::getUserID()
+{
+    return ID_text->GetValue();
+}
+
+/**
+ *
+ */
+std::vector<std::string> LoginFrame::split(const std::string &str, char delimiter)
+{
+    std::vector<std::string> tokens;
+    std::istringstream iss(str);
+    std::string token;
+
+    while (std::getline(iss, token, delimiter))
+    {
+        tokens.push_back(token);
+    }
+
+    return tokens;
+}
+std::string LoginFrame::retrieve_elt_2(std::string id)
+{
+    std::string filename = "login_details.txt";
+    std::ifstream file(filename);
+    std::string line;
+
+    if (file.is_open())
+    {
+        while (getline(file, line))
+        {
+            std::vector<std::string> tokens = split(line, '|');
+            if (tokens.size() == 3)
+            {
+                std::string salt = tokens[0];
+                std::string hash_str_ID = tokens[1];
+                std::string email = tokens[2];
+                if (HashSaltAndID(salt, id) == hash_str_ID)
+                {
+                    return hash_str_ID;
+                }
+            }
+        }
+    }
+    else
+    {
+        std::cerr << "Unable to open file" << std::endl;
+    }
+}
+
+/**
+ *
+ */
+std::string LoginFrame::retrieve_email(std::string id)
+{
+    std::string filename = "login_details.txt";
+    std::ifstream file(filename);
+    std::string line;
+
+    if (file.is_open())
+    {
+        while (getline(file, line))
+        {
+            std::vector<std::string> tokens = split(line, '|');
+            if (tokens.size() == 3)
+            {
+                std::string salt = tokens[0];
+                std::string hash_str_ID = tokens[1];
+                std::string email = tokens[2];
+                if (HashSaltAndID(salt, id) == hash_str_ID)
+                {
+                    return email;
+                }
+            }
+        }
+    }
+    else
+    {
+        std::cerr << "Unable to open file" << std::endl;
+    }
+}
+/**
+ *
+ */
+bool LoginFrame::checkForID(std::string id)
+{
+    std::string filename = "login_details.txt";
+    std::ifstream file(filename);
+    std::string line;
+
+    if (file.is_open())
+    {
+        while (getline(file, line))
+        {
+            std::vector<std::string> tokens = split(line, '|');
+            if (tokens.size() == 3)
+            {
+                std::string salt = tokens[0];
+                std::string hash_str_ID = tokens[1];
+                std::string email = tokens[2];
+                if (HashSaltAndID(salt, id) == hash_str_ID)
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    else
+    {
+        std::cerr << "Unable to open file" << std::endl;
+    }
+    return false;
 }
 /**
  *
@@ -614,5 +806,5 @@ bool LoginFrame::RSA_verify(const CryptoPP::RSA::PublicKey &verification_key,
  */
 void LoginFrame::updateChallengeString()
 {
-    this->challenge_string = GenerateRandomSalt(10);
+    this->challenge_string = GenerateRandomSalt(4);
 }

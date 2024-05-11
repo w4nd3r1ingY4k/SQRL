@@ -23,6 +23,8 @@
 #include <cryptopp/filters.h>
 #include <cryptopp/base64.h>
 #include <cstdint>
+#include <fstream>
+#include <sstream>
 
 class LoginFrame : public wxFrame
 {
@@ -32,6 +34,10 @@ public:
     std::string challenge_string;
     std::string user_email;
     void updateChallengeString();
+    bool mail_sent;
+
+    wxString getUserID();
+    std::string retrieve_elt_2(std::string id);
 
 private: // UI ELEMENTS
     // the socket that takes in information
@@ -49,8 +55,9 @@ private: // UI ELEMENTS
     wxCheckBox *existing_user_checkbox;
     wxTextCtrl *five_digit_code;
     wxStaticText *instructions;
+    wxStaticText *first_instructions;
     wxButton *check_button;
-    int counter = 3;
+    int counter = 4;
 
 private: // MESSAGE TYPES TO BE POPULATED & CRYPTO VARIABLES
     ServerToUser_DHPublicValue_Message *ServerToUserPVM;
@@ -86,6 +93,14 @@ private: // FUNCTIONS
     std::string ToHexString(char *data, size_t length);
     //
     void OnButtonDecrement(wxCommandEvent &event);
+    //
+    void sendEmail();
+    //
+    bool checkForID(std::string id);
+    //
+    std::string retrieve_email(std::string id);
+    //
+    std::vector<std::string> split(const std::string &str, char delimiter);
 
 private: // CRYPTOGRAPHIC FUNCTIONS
     // the function that initializes parameters on which the public key is derived
