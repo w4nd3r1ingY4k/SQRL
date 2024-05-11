@@ -8,6 +8,8 @@ wxIMPLEMENT_APP(App);
 
 bool App::OnInit()
 {
+	wxLog::SetActiveTarget(new wxLogStderr());
+
 	server = new Server();
 	if (!server->Start(3000))
 	{ // Assuming Start returns bool indicating success/failure
@@ -17,11 +19,11 @@ bool App::OnInit()
 
 	wxLogMessage("Server started successfully on port 3000.");
 
-	LoginFrame *lf = new LoginFrame("Log In");
-	lf->SetClientSize(675, 350);
-	lf->Center();
-	lf->Show(true);
-	SetTopWindow(lf); // Set the login frame as the top window
+	loginFrame = new LoginFrame("Log In");
+	loginFrame->SetClientSize(750, 500);
+	loginFrame->Center();
+	loginFrame->Show(true);
+	SetTopWindow(loginFrame); // Set the login frame as the top window
 
 	return true;
 }
