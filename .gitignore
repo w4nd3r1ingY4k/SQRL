@@ -1,0 +1,5 @@
+gmail_app_password.txt
+*.dSYM/
+MyApp
+sqrl
+*.o

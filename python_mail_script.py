@@ -13,9 +13,19 @@ def send_email(subject, body, to_email):
     gmail_user = os.environ.get("SQRL_GMAIL_USER", "authenticatorsqrl@gmail.com")
     gmail_pw = os.environ.get("SQRL_GMAIL_APP_PASSWORD")
     if not gmail_pw:
+        # Restore "just run it" behavior without committing secrets:
+        # allow a local file next to this script (gitignored).
+        secret_path = os.path.join(os.path.dirname(__file__), "gmail_app_password.txt")
+        try:
+            with open(secret_path, "r", encoding="utf-8") as f:
+                gmail_pw = f.read().strip()
+        except FileNotFoundError:
+            gmail_pw = None
+
+    if not gmail_pw:
         raise RuntimeError(
-            "Missing SQRL_GMAIL_APP_PASSWORD env var. "
-            "Set it to a Gmail App Password before sending mail."
+            "Missing Gmail app password. Set SQRL_GMAIL_APP_PASSWORD or create "
+            "gmail_app_password.txt next to python_mail_script.py (one line)."
         )
     
 
