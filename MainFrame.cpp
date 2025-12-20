@@ -9,6 +9,29 @@
 #include <cstdlib>
 #include <fstream>
 
+namespace
+{
+	std::string Base64EncodeString(const std::string &in)
+	{
+		std::string out;
+		CryptoPP::StringSource ss(
+			in,
+			true,
+			new CryptoPP::Base64Encoder(new CryptoPP::StringSink(out), false /* insertLineBreaks */));
+		return out;
+	}
+
+	std::string Base64DecodeString(const std::string &in)
+	{
+		std::string out;
+		CryptoPP::StringSource ss(
+			in,
+			true,
+			new CryptoPP::Base64Decoder(new CryptoPP::StringSink(out)));
+		return out;
+	}
+}
+
 MainFrame::MainFrame(std::string ID, const wxString &title) : wxFrame(nullptr, wxID_ANY, title), ID_text(ID)
 {
 	this->SetBackgroundColour(wxColour(47, 79, 79));
@@ -84,6 +107,7 @@ MainFrame::MainFrame(std::string ID, const wxString &title) : wxFrame(nullptr, w
 	// Bindings
 	submit_button->Bind(wxEVT_BUTTON, &MainFrame::OnButtonEncrypt, this);
 	decrypt_button->Bind(wxEVT_BUTTON, &MainFrame::OnButtonDecrypt, this);
+	allkeys_button->Bind(wxEVT_BUTTON, &MainFrame::OnButtonAllKeys, this);
 	clear_button->Bind(wxEVT_BUTTON, &MainFrame::OnButtonClear, this);
 
 	// Finalize the layout and show the status bar
@@ -191,6 +215,54 @@ void MainFrame::OnButtonDecrypt(wxCommandEvent &event)
 
 void MainFrame::OnButtonAllKeys(wxCommandEvent &event)
 {
+	std::string filename = HashIDTwice(ID_text) + ".txt";
+	std::ifstream file(filename);
+	if (!file.is_open())
+	{
+		wxMessageBox("No stored data file found yet for this user.", "Key Search", wxOK | wxICON_INFORMATION);
+		return;
+	}
+
+	std::string line;
+	std::vector<std::string> ids;
+	while (std::getline(file, line))
+	{
+		std::vector<std::string> tokens = split(line, '|');
+		if (tokens.size() == 2)
+		{
+			ids.push_back(tokens[0]);
+		}
+	}
+
+	if (ids.empty())
+	{
+		wxMessageBox("No IDs found in the local vault for this user.", "Key Search", wxOK | wxICON_INFORMATION);
+		return;
+	}
+
+	std::ostringstream oss;
+	oss << "Stored IDs (" << ids.size() << "):\n";
+	for (const auto &id : ids)
+	{
+		oss << "- " << id << "\n";
+	}
+
+	wxTextCtrl *idTextCtrl = new wxTextCtrl(
+		repl_panel_top_left,
+		wxID_ANY,
+		wxString(oss.str().c_str(), wxConvUTF8),
+		wxDefaultPosition,
+		wxDefaultSize,
+		wxTE_READONLY | wxBORDER_NONE | wxTE_MULTILINE);
+	idTextCtrl->SetBackgroundColour(repl_panel_top_left->GetBackgroundColour());
+	idTextCtrl->SetForegroundColour(wxColour(230, 230, 230));
+	font.SetPointSize(10);
+	idTextCtrl->SetFont(font);
+
+	wxSizer *sizer = repl_panel_top_left->GetSizer();
+	sizer->Add(idTextCtrl, 0, wxEXPAND | wxALL, 5);
+	repl_panel_top_left->FitInside();
+	repl_panel_top_left->Layout();
 }
 /*
 	on button clear clears every element from the main text box.
@@ -204,6 +276,10 @@ void MainFrame::OnButtonClear(wxCommandEvent &event)
 		wxSizerItem *item = sizer->GetItem((size_t)0);
 		if (item)
 		{
+			if (item->IsWindow() && item->GetWindow())
+			{
+				item->GetWindow()->Destroy();
+			}
 			sizer->Remove(0);
 		}
 
@@ -226,12 +302,14 @@ std::string MainFrame::decrypt(const std::string &encrypted_data)
 
 	try
 	{
+		// Stored ciphertext is Base64 so it's safe to keep in a text file.
+		std::string decoded_ciphertext = Base64DecodeString(encrypted_data);
 		CBC_Mode<AES>::Decryption dec;
 		dec.SetKeyWithIV(key, sizeof(key), iv);
 
 		// The StreamTransformationFilter removes
 		// padding as required.
-		StringSource ss(encrypted_data, true,
+		StringSource ss(decoded_ciphertext, true,
 						new StreamTransformationFilter(dec,
 													   new StringSink(plaintext)) // StreamTransformationFilter
 		);																		  // StringSource
@@ -276,7 +354,8 @@ std::string MainFrame::encrypt(const std::string &plaintext)
 		exit(1);
 	}
 
-	return ciphertext;
+	// Encode binary ciphertext for safe file storage and parsing.
+	return Base64EncodeString(ciphertext);
 }
 
 void MainFrame::OnButtonEncrypt(wxCommandEvent &event)

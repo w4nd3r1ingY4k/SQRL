@@ -1,12 +1,22 @@
 import smtplib
 import argparse
+import os
 from email.mime.text import MIMEText
 
 
 def send_email(subject, body, to_email):
     
-    gmail_user = "authenticatorsqrl@gmail.com"
-    gmail_pw = "nzwh cutl jnvb acqi"
+    # IMPORTANT: don't hardcode credentials in source control.
+    # Configure these via environment variables:
+    # - SQRL_GMAIL_USER (default: authenticatorsqrl@gmail.com)
+    # - SQRL_GMAIL_APP_PASSWORD (required)
+    gmail_user = os.environ.get("SQRL_GMAIL_USER", "authenticatorsqrl@gmail.com")
+    gmail_pw = os.environ.get("SQRL_GMAIL_APP_PASSWORD")
+    if not gmail_pw:
+        raise RuntimeError(
+            "Missing SQRL_GMAIL_APP_PASSWORD env var. "
+            "Set it to a Gmail App Password before sending mail."
+        )
     
 
     msg = MIMEText(body)
