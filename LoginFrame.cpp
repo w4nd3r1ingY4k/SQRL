@@ -146,7 +146,7 @@ void LoginFrame::sendEmail()
             std::string body = "Here is your SQRL verification code: \n" + challenge_string;
 
             std::stringstream ss;
-            ss << "python python_mail_script.py \"" << subject << "\" \"" << body << "\" \"" << to_email << "\"";
+            ss << "python3 python_mail_script.py \"" << subject << "\" \"" << body << "\" \"" << to_email << "\"";
             system(ss.str().c_str());
             mail_sent = true;
         }
@@ -165,7 +165,7 @@ void LoginFrame::sendEmail()
             std::string to_email(to_email_wx);
 
             std::stringstream ss;
-            ss << "python python_mail_script.py \"" << subject << "\" \"" << body << "\" \"" << to_email << "\"";
+            ss << "python3 python_mail_script.py \"" << subject << "\" \"" << body << "\" \"" << to_email << "\"";
             system(ss.str().c_str());
             mail_sent = true;
         }
